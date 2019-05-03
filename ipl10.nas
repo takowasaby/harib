@@ -75,6 +75,7 @@ next:
 		CMP 	CH,CYLS
 		JB 		readloop
 
+		MOV 	[0x0ff0],CH
 		JMP 	0xc200
 
 error:
