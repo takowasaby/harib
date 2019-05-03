@@ -2,3 +2,8 @@
 *.img
 *.lst
 *.sys
+*.map
+*.gas
+*.obj
+*.bim
+*.hrb
