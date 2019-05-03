@@ -33,8 +33,25 @@ entry:
 		MOV 	SS,AX
 		MOV 	SP,0x7c00
 		MOV 	DS,AX
+		
+		MOV 	AX,0x0820
 		MOV 	ES,AX
+		MOV 	CH,0
+		MOV 	DH,0
+		MOV 	CL,2
 
+		MOV 	AH,0x02
+		MOV 	AL,1
+		MOV 	BX,0
+		MOV		DL,0x00
+		INT 	0x13
+		JC 		error
+
+fin:
+		HLT
+		JMP 	fin
+
+error:
 		MOV 	SI,msg
 putloop:
 		MOV 	AL,[SI]
@@ -45,10 +62,6 @@ putloop:
 		MOV 	BX,15
 		INT 	0x10
 		JMP		putloop
-fin:
-		HLT
-		JMP 	fin
-
 msg:
 		DB		0x0a, 0x0a		; â¸çsÇ2Ç¬
 		DB		"ossu ora Takowasabi"
