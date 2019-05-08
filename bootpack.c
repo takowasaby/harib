@@ -37,9 +37,6 @@ void HariMain(void)
 	my = (binfo->scrny - 28 - 16) / 2;
 	init_mouse_cursor8(mcursor, COL8_008484);
 	putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
-
-	sprintf(s, "(%d, %d)", mx, my);
-	putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
 	
 	putfonts8_asc(binfo->vram, binfo->scrnx, 31, 31, COL8_000000, "King Warthur was a legendary leader");
 	putfonts8_asc(binfo->vram, binfo->scrnx, 30, 30, COL8_FFFFFF, "King Warthur was a legendary leader");
@@ -81,6 +78,29 @@ void HariMain(void)
 					}
 					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 32, 16, 32 + 15 * 8 - 1, 31);
 					putfonts8_asc(binfo->vram, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
+					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, mx, my, mx + 15, my + 15);
+					mx += mdec.x;
+					my += mdec.y;
+					if (mx < 0)
+					{
+						mx = 0;
+					}
+					if (my < 0)
+					{
+						my = 0;
+					}
+					if (mx > binfo->scrnx - 16)
+					{
+						mx = binfo->scrnx - 16;
+					}
+					if (my > binfo->scrny - 16)
+					{
+						my = binfo->scrny - 16;
+					}
+					sprintf(s, "(%d, %d)", mx, my);
+					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 0, 79, 15);
+					putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
+					putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
 				}
 			}
 		}
