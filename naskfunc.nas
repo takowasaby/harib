@@ -94,11 +94,11 @@ _load_idtr:     ; void load_idtr(int limit, int addr);
         LIDT    [ESP+6]
         RET
 
-_load_cr0:      ; void load_cr0(void);
+_load_cr0:      ; int load_cr0(void);
         MOV     EAX,CR0
         RET
 
-_store_cr0:     ; void store_cr0(int cr0)
+_store_cr0:     ; void store_cr0(int cr0);
         MOV     EAX,[ESP+4]
         MOV     CR0,EAX
         RET
