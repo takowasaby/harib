@@ -53,55 +53,78 @@ void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data)
 
 void timer_settime(struct TIMER *timer, unsigned int timeout)
 {
-    int eflags, i, j;
+    int eflags;
+    struct TIMER *t, *s;
     timer->timeout = timeout + timerctl.count;
     timer->flags = TIMER_FLAGS_USING;
     eflags = io_load_eflags();
     io_cli();
-    for (i = 0; i < timerctl.use; i++)
+    timerctl.use++;
+    if (timerctl.use == 1)
     {
-        if (timerctl.timers[i]->timeout >= timer->timeout)
+        timerctl.t0 = timer;
+        timer->next = 0;
+        timerctl.next = timer->timeout;
+        io_store_eflags(eflags);
+        return;
+    }
+    t = timerctl.t0;
+    if (timer->timeout <= t->timeout)
+    {
+        timerctl.t0 = timer;
+        timer->next = t;
+        timerctl.next = timer->timeout;
+        io_store_eflags(eflags);
+        return;
+    }
+    for (;;)
+    {
+        s = t;
+        t= t->next;
+        if (t == 0)
         {
             break;
         }
+        if (timer->timeout <= t->timeout)
+        {
+            s->next = timer;
+            timer->next = t;
+            io_store_eflags(eflags);
+            return;
+        }
     }
-    for (j = timerctl.use; j > i; j--)
-    {
-        timerctl.timers[j] = timerctl.timers[j - 1];
-    }
-    timerctl.use++;
-    timerctl.timers[i] = timer;
-    timerctl.next = timerctl.timers[0]->timeout;
+    s->next = timer;
+    timer->next = 0;
     io_store_eflags(eflags);
     return;
 }
 
 void inthandler20(int *esp)
 {
-    int i, j;
+    int i;
+    struct TIMER *timer;
     io_out8(PIC0_OCW2, 0x60);
     timerctl.count++;
     if (timerctl.next > timerctl.count)
     {
         return;
     }
+    timer = timerctl.t0;
     for (i = 0; i < timerctl.use; i++)
     {
-        if (timerctl.timers[i]->timeout > timerctl.count)
+        if (timer->timeout > timerctl.count)
         {
             break;
         }
-        timerctl.timers[i]->flags = TIMER_FLAGS_ALLOC;
-        fifo32_put(timerctl.timers[i]->fifo, timerctl.timers[i]->data);
+        timer->flags = TIMER_FLAGS_ALLOC;
+        fifo32_put(timer->fifo, timer->data);
+        timer = timer->next;
     }
     timerctl.use -= i;
-    for (j = 0; j < timerctl.use; j++)
-    {
-        timerctl.timers[j] = timerctl.timers[i + j];
-    }
+    timerctl.t0 = timer;
     if (timerctl.use > 0)
     {
-        timerctl.next = timerctl.timers[0]->timeout;
+        timerctl.next = timerctl.t0->timeout;
     }
     else
     {
