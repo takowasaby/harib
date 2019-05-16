@@ -15,13 +15,15 @@ VRAM    EQU     0x0ff8
 
         ORG     0xc200
 
-        MOV     AL,0x13
-        MOV     AH,0x00
+; 画面モードの設定
+
+        MOV     BX,0x4105
+        MOV     AX,0x4f02
         INT     0x10
         MOV     BYTE [VMODE],8
-        MOV     WORD [SCRNX],320
-        MOV     WORD [SCRNY],200
-        MOV     DWORD [VRAM],0x000a0000
+        MOV     WORD [SCRNX],1024
+        MOV     WORD [SCRNY],768
+        MOV     DWORD [VRAM],0xe0000000
 
 ; キーボードのLED状態をBIOSに教えてもらう
 
