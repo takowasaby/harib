@@ -27,8 +27,8 @@ void HariMain(void)
 		'2', '3', '0', '.'
 	};
 	unsigned char *buf_back, buf_mouse[256], *buf_win, *buf_win_b;
-	struct SHEET *sht_back, *sht_mouse, *sht_win, *sht_win_b[3];
-	struct TASK *task_a, *task_b[3];
+	struct SHEET *sht_back, *sht_mouse, *sht_win, *sht_win_b[15];
+	struct TASK *task_a, *task_b[15];
 	struct TIMER *timer;
 
 	init_gdtidt();
@@ -57,7 +57,7 @@ void HariMain(void)
 	sheet_setbuf(sht_back, buf_back, binfo->scrnx, binfo->scrny, -1);
 	init_screen8(buf_back, binfo->scrnx, binfo->scrny);
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 15; i++)
 	{
 		sht_win_b[i] = sheet_alloc(shtctl);
 		buf_win_b = (unsigned char *) memman_alloc_4k(memman, 144 * 52);
@@ -74,7 +74,7 @@ void HariMain(void)
 		task_b[i]->tss.fs = 1 * 8;
 		task_b[i]->tss.gs = 1 * 8;
 		*((int *) (task_b[i]->tss.esp + 4)) = (int) sht_win_b[i];
-		task_run(task_b[i], 2, i + 1);
+		// task_run(task_b[i], 2, i + 1);
 	}
 	
 	sht_win = sheet_alloc(shtctl);
@@ -95,17 +95,21 @@ void HariMain(void)
 	my = (binfo->scrny - 28 - 16) / 2;
 
 	sheet_slide(sht_back, 0, 0);
-	sheet_slide(sht_win_b[0], 168,  56);
-	sheet_slide(sht_win_b[1],   8, 116);
-	sheet_slide(sht_win_b[2], 168, 116);
+	for (i = 1; i < 16; i++)
+	{
+		int winx = 8 + 160 * (i / 4);
+		int winy = 56 + 60 * (i % 4);
+		sheet_slide(sht_win_b[i - 1], winx,  winy);
+	} 
 	sheet_slide(sht_win,        8,  56);
 	sheet_slide(sht_mouse,      8,  56);
 	sheet_updown(sht_back, 0);
-	sheet_updown(sht_win_b[0], 1);
-	sheet_updown(sht_win_b[1], 2);
-	sheet_updown(sht_win_b[2], 3);
-	sheet_updown(sht_win, 4);
-	sheet_updown(sht_mouse, 5);
+	for (i = 1; i < 16; i++)
+	{
+		sheet_updown(sht_win_b[i - 1], i);
+	} 
+	sheet_updown(sht_win, 16);
+	sheet_updown(sht_mouse, 17);
 	sprintf(s, "(%3d, %3d)", mx, my);
 	putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);
 	sprintf(s, "memory %dMB    free : %dKB", memtotal / (1024 * 1024), memman_total(memman) / 1024);
