@@ -74,10 +74,10 @@ void HariMain(void)
 	init_screen8(buf_back, binfo->scrnx, binfo->scrny);
 
 	sht_cons = sheet_alloc(shtctl);
-	buf_cons = (unsigned char *) memman_alloc_4k(memman, 512 * 330);
-	sheet_setbuf(sht_cons, buf_cons, 512, 330, -1);
-	make_window8(buf_cons, 512, 330, "console", 0);
-	make_textbox8(sht_cons, 8, 28, 498, 293, COL8_000000);
+	buf_cons = (unsigned char *) memman_alloc_4k(memman, 512 * 341);
+	sheet_setbuf(sht_cons, buf_cons, 512, 341, -1);
+	make_window8(buf_cons, 512, 341, "console", 0);
+	make_textbox8(sht_cons, 8, 28, 496, 304, COL8_000000);
 	task_cons = task_alloc();
 	task_cons->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 8;
 	task_cons->tss.eip = (int) &console_task;
@@ -450,6 +450,7 @@ void console_task(struct SHEET *sheet)
 	struct TASK *task = task_now();
 	int i, fifobuf[128], cursor_x = 16, cursor_y = 28, cursor_c = -1;
 	char s[2];
+	int x, y;
 
 	fifo32_init(&task->fifo, 128, fifobuf, task);
 	timer = timer_alloc();
@@ -509,15 +510,33 @@ void console_task(struct SHEET *sheet)
 						cursor_x -= 8;
 					}
 				}
-				if (i == 10 + 256)
+				else if (i == 10 + 256)
 				{
-					if (cursor_y < 28 + 272)
+					putfonts8_asc_sht(sheet, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
+					if (cursor_y < 28 + 288)
 					{
-						putfonts8_asc_sht(sheet, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
 						cursor_y += 16;
-						putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF, COL8_000000, ">", 1);
-						cursor_x = 16;
+					} 
+					else 
+					{
+						for (y = 28; y < 28 + 288; y++) 
+						{
+							for (x = 8; x < 8 + 496; x++) 
+							{
+								sheet->buf[x + y * sheet->bxsize] = sheet->buf[x + (y + 16) * sheet->bxsize];
+							}
+						}
+						for (y = 28 + 288; y < 28 + 304; y++) 
+						{
+							for (x = 8; x < 8 + 496; x++) 
+							{
+								sheet->buf[x + y * sheet->bxsize] = COL8_000000;
+							}
+						}
+						sheet_refresh(sheet, 8, 28, 8 + 496, 28 + 304);
 					}
+					putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF, COL8_000000, ">", 1);
+					cursor_x = 16;
 				}
 				else
 				{
