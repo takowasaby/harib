@@ -174,6 +174,25 @@ void cons_newline(struct CONSOLE *cons)
 	return;
 }
 
+void cons_putstr0(struct CONSOLE *cons, char *s)
+{
+	for (; *s != 0; s++)
+	{
+		cons_putchar(cons, *s, 1);
+	}
+	return;
+}
+
+void cons_putstr1(struct CONSOLE *cons, char *s, int l)
+{
+	int i;
+	for (i = 0; i < l; i++)
+	{
+		cons_putchar(cons, s[i], 1);
+	}
+	return;
+}
+
 void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, unsigned int memtotal)
 {
 	if (strcmp(cmdline, "mem") == 0)
@@ -196,9 +215,7 @@ void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, unsigned int mem
 	{
 		if (cmd_app(cons, fat, cmdline) == 0)
 		{
-			putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, "Bad command.", 12);
-			cons_newline(cons);
-			cons_newline(cons);
+			cons_putstr0(cons, "Bad Command.\n\n");
 		}
 	}
 	return;
@@ -208,13 +225,8 @@ void cmd_mem(struct CONSOLE *cons, unsigned int memtotal)
 {
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	char s[30];
-	sprintf(s, "total   %dMB", memtotal / (1024 * 1024));
-	putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
-	cons_newline(cons);
-	sprintf(s, "free %dKB", memman_total(memman) / 1024);
-	putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
-	cons_newline(cons);
-	cons_newline(cons);
+	sprintf(s, "total   %dMB\nfree %dKB\n\n", memtotal / (1024 * 1024), memman_total(memman) / 1024);
+	cons_putstr0(cons, s);
 	return;
 }
 
@@ -230,7 +242,8 @@ void cmd_cls(struct CONSOLE *cons)
 		}
 	}
 	sheet_refresh(sheet, 8, 28, 8 + 496, 28 + 304);
-	cons->cur_x = 28;
+	cons->cur_y = 28;
+	return;
 }
 
 void cmd_dir(struct CONSOLE *cons)
@@ -256,8 +269,7 @@ void cmd_dir(struct CONSOLE *cons)
 				s[9] = finfo[x].ext[0];
 				s[10] = finfo[x].ext[1];
 				s[11] = finfo[x].ext[2];
-				putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
-				cons_newline(cons);
+				cons_putstr0(cons, s);
 			}
 		}
 	}
@@ -270,21 +282,16 @@ void cmd_type(struct CONSOLE *cons, int *fat, char *cmdline)
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct FILEINFO *finfo = file_search(cmdline + 5, (struct FILEINFO *) (ADR_DISKING + 0x002600), 224);
 	char *p;
-	int i;
 	if (finfo != 0)
 	{
 		p = (char *) memman_alloc_4k(memman, finfo->size);
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKING + 0x003e00));
-		for (i = 0; i < finfo->size; i++)
-		{
-			cons_putchar(cons, p[i], 1);
-		}
+		cons_putstr1(cons, p, finfo->size);
 		memman_free_4k(memman, (int) p, finfo->size);
 	}
 	else
 	{
-		putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
-		cons_newline(cons);
+		cons_putstr0(cons, "File not found.\n");
 	}
 	cons_newline(cons);
 	return;
@@ -322,6 +329,7 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 	if (finfo != 0)
 	{
 		p = (char *) memman_alloc_4k(memman, finfo->size);
+		*((int *) 0xfe8) = (int) p;
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKING + 0x003e00));
 		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);
         farcall(0, 1003 * 8);
@@ -330,4 +338,23 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 		return 1;
 	}
 	return 0;
+}
+
+void hrb_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax)
+{
+	int cs_base = *((int *) 0xfe8);
+	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
+	if (edx == 1)
+	{
+		cons_putchar(cons, eax & 0xff, 1);
+	}
+	else if (edx == 2)
+	{
+		cons_putstr0(cons, (char *) ebx + cs_base);
+	}
+	else if (edx == 3)
+	{
+		cons_putstr1(cons, (char *) ebx + cs_base, ecx);
+	}
+	return;
 }

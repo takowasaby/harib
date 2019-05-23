@@ -19,10 +19,10 @@
         GLOBAL  _asm_inthandler27, _asm_inthandler2c
         GLOBAL	_memtest_sub
         GLOBAL  _farjmp, _farcall
-        GLOBAL  _asm_cons_putchar
+        GLOBAL  _asm_hrb_api
         EXTERN  _inthandler20, _inthandler21
         EXTERN  _inthandler27, _inthandler2c
-        EXTERN  _cons_putchar
+        EXTERN  _hrb_api
 
 [SECTION .text]
 
@@ -219,12 +219,11 @@ _farcall:       ; void farcall(int eip, int cs);
         CALL    FAR [ESP+4]
         RET
 
-_asm_cons_putchar:
+_asm_hrb_api:
         STI
-        PUSH    1
-        AND     EAX,0xff
-        PUSH    EAX
-        PUSH    DWORD [0x0fec]
-        CALL    _cons_putchar
-        ADD     ESP,12
+        PUSHAD
+        PUSHAD
+        CALL    _hrb_api
+        ADD     ESP,32
+        POPAD
         IRETD
