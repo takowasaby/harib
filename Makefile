@@ -75,10 +75,16 @@ bug1.bim : bug1.obj Makefile
 bug1.hrb : bug1.bim Makefile
 	${BIM2HRB} bug1.bim bug1.hrb 0
 
+bug2.bim : bug2.obj Makefile
+	${OBJ2BIM} @${RULEFILE} out:bug2.bim map:bug2.map bug2.obj
+
+bug2.hrb : bug2.bim Makefile
+	${BIM2HRB} bug2.bim bug2.hrb 0
+
 haribote.sys : asmhead.bin bootpack.hrb Makefile
 	copy /B asmhead.bin+bootpack.hrb haribote.sys
 
-haribote.img : ipl10.bin haribote.sys hello.hrb hello2.hrb a.hrb hello3.hrb bug1.hrb Makefile
+haribote.img : ipl10.bin haribote.sys hello.hrb hello2.hrb a.hrb hello3.hrb bug1.hrb bug2.hrb Makefile
 	${EDIMG}   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl10.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
@@ -89,6 +95,7 @@ haribote.img : ipl10.bin haribote.sys hello.hrb hello2.hrb a.hrb hello3.hrb bug1
 		copy from:a.hrb to:@: \
 		copy from:hello3.hrb to:@: \
 		copy from:bug1.hrb to:@: \
+		copy from:bug2.hrb to:@: \
 		imgout:haribote.img
 
 # 一般規則
