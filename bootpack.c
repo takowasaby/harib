@@ -62,6 +62,7 @@ void HariMain(void)
 	task_a = task_init(memman);
 	fifo.task = task_a;
 	task_run(task_a, 1, 2);
+	*((int *) 0x0fe4) = (int) shtctl;
 
 	sht_back = sheet_alloc(shtctl);
 	buf_back = (unsigned char *) memman_alloc_4k(memman, binfo->scrnx * binfo->scrny);
