@@ -7,6 +7,11 @@
         GLOBAL  _api_putstr0
         GLOBAL  _api_end
         GLOBAL  _api_openwin
+        GLOBAL  _api_putstrwin
+        GLOBAL  _api_boxfillwin
+        GLOBAL  _api_initmalloc
+        GLOBAL  _api_malloc
+        GLOBAL  _api_free
 
 [SECTION .text]
 
@@ -42,4 +47,73 @@ _api_openwin:   ; int api_openwin(char *buf, int xsiz, int ysiz, int col_inv, ch
         POP     EBX
         POP     ESI
         POP     EDI
+        RET
+
+_api_putstrwin:   ; void api_putstrwin(int win, int x, int y, int col, int len, char *str);
+        PUSH    EDI
+        PUSH    ESI
+        PUSH    EBP
+        PUSH    EBX
+        MOV     EDX,6
+        MOV     EBX,[ESP+20]
+        MOV     ESI,[ESP+24]
+        MOV     EDI,[ESP+28]
+        MOV     EAX,[ESP+32]
+        MOV     ECX,[ESP+36]
+        MOV     EBP,[ESP+40]
+        INT     0x40
+        POP     EBX
+        POP     EBP
+        POP     ESI
+        POP     EDI
+        RET
+
+_api_boxfillwin:    ; void api_boxfillwin(int win, int x0, int y0, int x1, int y1, int col);
+        PUSH    EDI
+        PUSH    ESI
+        PUSH    EBP
+        PUSH    EBX
+        MOV     EDX,7
+        MOV     EBX,[ESP+20]
+        MOV     EAX,[ESP+24]
+        MOV     ECX,[ESP+28]
+        MOV     ESI,[ESP+32]
+        MOV     EDI,[ESP+36]
+        MOV     EBP,[ESP+40]
+        INT     0x40
+        POP     EBX
+        POP     EBP
+        POP     ESI
+        POP     EDI
+        RET
+
+_api_initmalloc:    ; void api_initmalloc(void);
+        PUSH    EBX
+        MOV     EDX,8
+        MOV     EBX,[CS:0x0020]
+        MOV     EAX,EBX
+        ADD     EAX,32*1024
+        MOV     ECX,[CS:0x0000]
+        SUB     ECX,EAX
+        INT     0x40
+        POP     EBX
+        RET
+
+_api_malloc:        ; char *api_malloc(int size);
+        PUSH    EBX
+        MOV     EDX,9
+        MOV     EBX,[CS:0x0020]
+        MOV     ECX,[ESP+8]
+        INT     0x40
+        POP     EBX
+        RET
+
+_api_free:          ; void api_free(char *addr, int size);
+        PUSH    EBX
+        MOV     EDX,10
+        MOV     EBX,[CS:0x0020]
+        MOV     EAX,[ESP+8]
+        MOV     ECX,[ESP+12]
+        INT     0x40
+        POP     EBX
         RET
