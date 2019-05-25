@@ -13,5 +13,6 @@ void HariMain(void)
         api_linewin(win + 1, 168, 26, i * 18 + 168, 170, i);
     }
     api_refreshwin(win, 6, 26, 313, 193);
+    api_closewin(win);
     api_end();
 }
