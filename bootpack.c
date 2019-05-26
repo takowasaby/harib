@@ -320,6 +320,12 @@ void HariMain(void)
 									if (sht->buf[y * sht->bxsize + x] != sht->col_inv)
 									{
 										sheet_updown(sht, shtctl->top - 1);
+										if (sht != key_win)
+										{
+											cursor_c = keywin_off(key_win, sht_win, cursor_c, cursor_x);
+											key_win = sht;
+											cursor_c = keywin_on(key_win, sht_win, cursor_c);
+										}
 										if (sht->bxsize - 21 <= x && x < sht->bxsize - 5 && 5 <= y && y < 19)
 										{
 											if ((sht->flags & 0x10) != 0)
