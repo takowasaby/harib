@@ -319,6 +319,19 @@ void HariMain(void)
 									if (sht->buf[y * sht->bxsize + x] != sht->col_inv)
 									{
 										sheet_updown(sht, shtctl->top - 1);
+										if (sht->bxsize - 21 <= x && x < sht->bxsize - 5 && 5 <= y && y < 19)
+										{
+											if (sht->task != 0)
+											{
+												cons = (struct CONSOLE *) *((int *) 0x0fec);
+												cons_putstr0(cons, "\nBreak(key) :\n");
+												io_cli();
+												task_cons->tss.eax = (int) &(task_cons->tss.esp0);
+												task_cons->tss.eip = (int) asm_end_app;
+												io_sti();
+												break;
+											}
+										}
 										if (3 <= x && x < sht->bxsize - 3 && 3 <= y && y < 21)
 										{
 											mmx = mx;
