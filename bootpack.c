@@ -261,6 +261,10 @@ void HariMain(void)
 					task_cons->tss.eip = (int) asm_end_app;
 					io_sti();
 				}
+				if (i == 256 + 0x57 && shtctl->top > 2)
+				{
+					sheet_updown(shtctl->sheets[1], shtctl->top - 1);
+				}
 				if (i == 256 + 0xfa)
 				{
 					keycmd_wait ^= -1;
