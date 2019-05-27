@@ -20,7 +20,7 @@ void HariMain(void)
 	struct SHTCTL *shtctl;
 	unsigned char *buf_back, buf_mouse[256], *buf_win, *buf_cons[CONSOLE_SIZE];
 	struct SHEET *sht_back, *sht_mouse, *sht_win, *sht_cons[CONSOLE_SIZE];
-	struct TASK *task_a, *task_cons[CONSOLE_SIZE];
+	struct TASK *task_a, *task_cons[CONSOLE_SIZE], *task;
 	struct TIMER *timer;
 	static char keytable0[0x80] = {
 		0,   0,   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '^', 0,   0,
@@ -261,14 +261,17 @@ void HariMain(void)
 					fifo32_put(&keycmd, KEYCMD_LED);
 					fifo32_put(&keycmd, key_leds);
 				}
-				if (i == 256 + 0x3b && key_shift != 0 && task_cons[0]->tss.ss0 != 0)
+				if (i == 256 + 0x3b && key_shift != 0)
 				{
-					cons = (struct CONSOLE *) *((int *) 0x0fec);
-					cons_putstr0(cons, "\nBreak(key) :\n");
-					io_cli();
-					task_cons[0]->tss.eax = (int) &(task_cons[0]->tss.esp0);
-					task_cons[0]->tss.eip = (int) asm_end_app;
-					io_sti();
+					task = key_win->task;
+					if (task != 0 && task->tss.ss0 != 0)
+					{
+						cons_putstr0(task->cons, "\nBreak(key) :\n");
+						io_cli();
+						task->tss.eax = (int) &(task->tss.esp0);
+						task->tss.eip = (int) asm_end_app;
+						io_sti();
+					}
 				}
 				if (i == 256 + 0x57 && shtctl->top > 2)
 				{
@@ -336,13 +339,12 @@ void HariMain(void)
 										{
 											if ((sht->flags & 0x10) != 0)
 											{
-												cons = (struct CONSOLE *) *((int *) 0x0fec);
-												cons_putstr0(cons, "\nBreak(key) :\n");
+												task = sht->task;
+												cons_putstr0(task->cons, "\nBreak(mouse) :\n");
 												io_cli();
-												task_cons[0]->tss.eax = (int) &(task_cons[0]->tss.esp0);
-												task_cons[0]->tss.eip = (int) asm_end_app;
+												task->tss.eax = (int) &(task->tss.esp0);
+												task->tss.eip = (int) asm_end_app;
 												io_sti();
-												break;
 											}
 										}
 										if (3 <= x && x < sht->bxsize - 3 && 3 <= y && y < 21)
