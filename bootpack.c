@@ -305,6 +305,13 @@ void HariMain(void)
 												task->tss.eip = (int) asm_end_app;
 												io_sti();
 											}
+											else
+											{
+												task = sht->task;
+												io_cli();
+												fifo32_put(&task->fifo, 4);
+												io_sti();
+											}
 										}
 										if (3 <= x && x < sht->bxsize - 3 && 3 <= y && y < 21)
 										{
