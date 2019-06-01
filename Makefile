@@ -21,7 +21,7 @@ haribote.img : haribote/ipl20.bin haribote/haribote.sys Makefile \
 		lines/lines.hrb walk/walk.hrb noodle/noodle.hrb \
 		beepdown/beepdown.hrb color/color.hrb color2/color2.hrb \
 		sosu/sosu.hrb sosu2/sosu2.hrb sosu3/sosu3.hrb typeipl/typeipl.hrb \
-		type/type.hrb iroha/iroha.hrb euc.txt
+		type/type.hrb iroha/iroha.hrb euc.txt notrec/notrec.hrb
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:haribote/ipl20.bin len:512 from:0 to:0 \
 		copy from:haribote/haribote.sys to:@: \
@@ -49,6 +49,7 @@ haribote.img : haribote/ipl20.bin haribote/haribote.sys Makefile \
 		copy from:typeipl/typeipl.hrb to:@: \
 		copy from:type/type.hrb to:@: \
 		copy from:iroha/iroha.hrb to:@: \
+		copy from:notrec/notrec.hrb to:@: \
 		copy from:euc.txt to:@: \
 		copy from:nihongo/nihongo.fnt to:@: \
 		imgout:haribote.img
@@ -89,6 +90,7 @@ full :
 	$(MAKE) -C typeipl
 	$(MAKE) -C type
 	$(MAKE) -C iroha
+	$(MAKE) -C notrec
 	$(MAKE) haribote.img
 
 run_full :
@@ -136,6 +138,7 @@ clean_full :
 	$(MAKE) -C typeipl 		clean
 	$(MAKE) -C type 		clean
 	$(MAKE) -C iroha 		clean
+	$(MAKE) -C notrec 		clean
 
 src_only_full :
 	$(MAKE) -C haribote		src_only
@@ -162,6 +165,7 @@ src_only_full :
 	$(MAKE) -C typeipl 		src_only
 	$(MAKE) -C type 		src_only
 	$(MAKE) -C iroha 		src_only
+	$(MAKE) -C notrec 		src_only
 	-$(DEL) haribote.img
 
 refresh :
