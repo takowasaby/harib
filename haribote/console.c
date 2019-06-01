@@ -2,7 +2,7 @@
 #include <string.h>
 #include "bootpack.h"
 
-void console_task(struct SHEET *sheet, unsigned int memtotal)
+void console_task(struct SHEET *sheet, int memtotal)
 {
 	struct TASK *task = task_now();
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
@@ -10,6 +10,7 @@ void console_task(struct SHEET *sheet, unsigned int memtotal)
 	struct CONSOLE cons;
 	struct FILEHANDLE fhandle[8];
 	char cmdline[30];
+	unsigned char *nihongo = (char *) *((int *) 0x0fe8);
 
 	cons.sht = sheet;
 	cons.cur_x = 8;
@@ -24,13 +25,22 @@ void console_task(struct SHEET *sheet, unsigned int memtotal)
 		timer_init(cons.timer, &task->fifo, 1);
 		timer_settime(cons.timer, 50);
 	}
-	file_readfat(fat, (unsigned char *) (ADR_DISKING + 0x000200));
+	file_readfat(fat, (unsigned char *) (ADR_DISKIMG + 0x000200));
 	for (i = 0; i < 8; i++)
 	{
 		fhandle[i].buf = 0;
 	}
 	task->fhandle = fhandle;
 	task->fat = fat;
+	if (nihongo[4096] != 0xff)
+	{
+		task->langmode = 1;
+	}
+	else
+	{
+		task->langmode = 0;
+	}
+	task->langbyte1 = 0;
 
 	cons_putchar(&cons, '>', 1);
 
@@ -178,6 +188,7 @@ void cons_newline(struct CONSOLE *cons)
 {
 	int x, y;
 	struct SHEET *sheet = cons->sht;
+	struct TASK *task = task_now();
 	if (cons->cur_y < 28 + 288)
 	{
 		cons->cur_y += 16;
@@ -204,6 +215,10 @@ void cons_newline(struct CONSOLE *cons)
 		}
 	}
 	cons->cur_x = 8;
+	if (task->langmode == 1 && task->langbyte1 != 0)
+	{
+		cons->cur_x = 16;
+	}
 	return;
 }
 
@@ -226,7 +241,7 @@ void cons_putstr1(struct CONSOLE *cons, char *s, int l)
 	return;
 }
 
-void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, unsigned int memtotal)
+void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, int memtotal)
 {
 	if (strcmp(cmdline, "mem") == 0)
 	{
@@ -252,6 +267,10 @@ void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, unsigned int mem
 	{
 		cmd_ncst(cons, cmdline, memtotal);
 	}
+	else if (strncmp(cmdline, "langmode ", 9) == 0)
+	{
+		cmd_langmode(cons, cmdline);
+	}
 	else if (cmdline[0] != 0)
 	{
 		if (cmd_app(cons, fat, cmdline) == 0)
@@ -262,7 +281,7 @@ void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, unsigned int mem
 	return;
 }
 
-void cmd_mem(struct CONSOLE *cons, unsigned int memtotal)
+void cmd_mem(struct CONSOLE *cons, int memtotal)
 {
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	char s[30];
@@ -289,7 +308,7 @@ void cmd_cls(struct CONSOLE *cons)
 
 void cmd_dir(struct CONSOLE *cons)
 {
-	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKING + 0x002600);
+	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKIMG + 0x002600);
 	int x, y;
 	char s[30];
 	for (x = 0; x < 224; x++)
@@ -376,11 +395,26 @@ void cmd_ncst(struct CONSOLE *cons, char *cmdline, int memtotal)
 	return;
 }
 
+void cmd_langmode(struct CONSOLE *cons, char *cmdline)
+{
+	struct TASK *task = task_now();
+	unsigned char mode = cmdline[9] - '0';
+	if (mode <= 1)
+	{
+		task->langmode = mode;
+	}
+	else
+	{
+		cons_putstr0(cons, "mode number error.\n");
+	}
+	cons_newline(cons);
+	return;
+}
+
 int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 {
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct FILEINFO *finfo;
-	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
 	char name[18], *p, *q;
 	struct TASK *task = task_now();
 	int i, segsiz, datsiz, esp, dathrb;
@@ -397,7 +431,7 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 	}
 	name[i] = 0;
 
-	finfo = file_search(name, (struct FILEINFO *) (ADR_DISKING + 0x002600), 224);
+	finfo = file_search(name, (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
 	if (finfo == 0 && name[i - 1] != '.')
 	{
 		name[i] = '.';
@@ -405,13 +439,13 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 		name[i + 2] = 'R';
 		name[i + 3] = 'B';
 		name[i + 4] = 0;
-		finfo = file_search(name, (struct FILEINFO *) (ADR_DISKING + 0x002600), 224);
+		finfo = file_search(name, (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
 	}
 
 	if (finfo != 0)
 	{
 		p = (char *) memman_alloc_4k(memman, finfo->size);
-		file_loadfile(finfo->clustno,finfo->size, p, fat, (char *) (ADR_DISKING + 0x003e00));
+		file_loadfile(finfo->clustno,finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
 		if (finfo->size >= 36 && strncmp(p + 4, "Hari", 4) == 0 && *p == 0x00)
 		{
 			segsiz = *((int *) (p + 0x0000));
@@ -446,6 +480,7 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 			}
 			timer_cancelall(&task->fifo);
 			memman_free_4k(memman, (int) q, segsiz);
+			task->langbyte1 = 0;
 		}
 		else
 		{
@@ -657,14 +692,14 @@ int *hrb_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int 
 		reg[7] = 0;
 		if (i < 8)
 		{
-			finfo = file_search((char *) ebx + ds_base, (struct FILEINFO *) (ADR_DISKING + 0x002600), 224);
+			finfo = file_search((char *) ebx + ds_base, (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
 			if (finfo != 0)
 			{
 				reg[7] = (int) fh;
 				fh->buf = (char *) memman_alloc_4k(memman, finfo->size);
 				fh->size = finfo->size;
 				fh->pos = 0;
-				file_loadfile(finfo->clustno, finfo->size, fh->buf, task->fat, (char *) (ADR_DISKING + 0x003e00));
+				file_loadfile(finfo->clustno, finfo->size, fh->buf, task->fat, (char *) (ADR_DISKIMG + 0x003e00));
 			}
 		}
 	}
