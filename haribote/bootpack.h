@@ -342,4 +342,4 @@ struct BALL
 };
 
 void init_ball8(char *ball, char bc);
-void update_ball(struct BALL *ball, int scrnx, int scrny, int v, unsigned char *map);
+int update_ball(struct BALL *ball, int scrnx, int scrny, int v, struct SHTCTL *shtctl);

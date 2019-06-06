@@ -243,6 +243,7 @@ void cons_putstr1(struct CONSOLE *cons, char *s, int l)
 
 void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, int memtotal)
 {
+	struct FIFO32 *fifo = (struct FIFO32 *) *((int *) 0x0fec);
 	if (strcmp(cmdline, "mem") == 0)
 	{
 		cmd_mem(cons, memtotal);
@@ -270,6 +271,10 @@ void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, int memtotal)
 	else if (strncmp(cmdline, "langmode ", 9) == 0)
 	{
 		cmd_langmode(cons, cmdline);
+	}
+	else if (strcmp(cmdline, "re") == 0)
+	{
+		fifo32_put(fifo, 12);
 	}
 	else if (cmdline[0] != 0)
 	{

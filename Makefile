@@ -64,7 +64,7 @@ haribote.img : haribote/ipl22.bin haribote/haribote.sys Makefile \
 		copy from:mmldata/daiku.mml to:@: \
 		copy from:pictdata/fujisan.jpg to:@: \
 		copy from:pictdata/night.bmp to:@: \
-		copy from:pictdata/chcclt.bmp to:@: \
+		copy from:pictdata/chcclt2.bmp to:@: \
 		copy from:zelda.bmp to:@: \
 		copy from:euc.txt to:@: \
 		copy from:savannah.txt to:@: \

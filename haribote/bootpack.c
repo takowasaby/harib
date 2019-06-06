@@ -50,6 +50,10 @@ void HariMain(void)
 	struct FILEINFO *finfo;
 	extern char hankaku[4096];
 	struct BALL ball;
+	struct SHEET *sht_blocks[16];
+	unsigned char *buf_blocks[16];
+	struct TASK *new_task;
+	struct FIFO32 *new_fifo;
 
 	init_gdtidt();
 	init_pic();
@@ -104,7 +108,7 @@ void HariMain(void)
 	ball.diry = -1;
 
 	sheet_slide(sht_back, 0, 0);
-	sheet_slide(key_win, 32, 4);
+	sheet_slide(key_win, 300, (binfo->scrny - 28 - 16) / 2 + 16);
 	sheet_slide(sht_ball, ball.x, ball.y);
 	sheet_slide(sht_mouse, 8, 56);
 	sheet_updown(sht_back, 0);
@@ -112,6 +116,18 @@ void HariMain(void)
 	sheet_updown(sht_ball, 2);
 	sheet_updown(sht_mouse, 3);
 	keywin_on(key_win);
+
+	for (i = 0; i < 16; i++)
+	{
+		sht_blocks[i] = sheet_alloc(shtctl);
+		buf_blocks[i] = (unsigned char *) memman_alloc_4k(memman, 100 * 50);
+		sheet_setbuf(sht_blocks[i], buf_blocks[i], 100, 50, -1);
+		make_window8(buf_blocks[i], 100, 50, "block", 0);
+		sheet_slide(sht_blocks[i], 14 + 128 * (i % 8), 10 + 60 * (i / 8));
+		sheet_updown(sht_blocks[i], 1);
+		sht_blocks[i]->flags &= 0x00;
+		sht_blocks[i]->flags |= 0x80;
+	}
 
 	fifo32_put(&keycmd, KEYCMD_LED);
 	fifo32_put(&keycmd, key_leds);
@@ -187,7 +203,34 @@ void HariMain(void)
 			}
 			if (i == 11)
 			{
-				update_ball(&ball, binfo->scrnx, binfo->scrny, 5, shtctl->map);
+				if (update_ball(&ball, binfo->scrnx, binfo->scrny, 5, shtctl) != 0)
+				{
+					int n, m = 0;
+					for (n = 0; n < 16; n++)
+					{
+						m += sht_blocks[n]->height;
+					}
+					if (m == -16)
+					{
+						new_task = open_constask(0, memtotal);
+						new_fifo = &new_task->fifo;
+						int n;
+						char *cmdline = "gview chcclt2.bmp";
+						for (n = 0; cmdline[n] != 0; n++)
+						{
+							fifo32_put(new_fifo, cmdline[n] + 256);
+						}
+						fifo32_put(new_fifo, 10 + 256);
+					}
+				}
+			}
+			if (i == 12)
+			{
+				int n;
+				for (n = 0; n < 16; n++)
+				{
+					sheet_updown(sht_blocks[n], 1);
+				}
 			}
 			if (256 <= i && i <= 511)
 			{
@@ -363,6 +406,10 @@ void HariMain(void)
 												task->tss.eip = (int) asm_end_app;
 												io_sti();
 												task_run(task, -1, 0);
+											}
+											else if ((sht->flags & 0x80) != 0)
+											{
+												sheet_updown(sht, -1);
 											}
 											else
 											{

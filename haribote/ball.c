@@ -48,8 +48,10 @@ unsigned char get_map_val(unsigned char *map, int scrnx, int x, int y)
     return map[y * scrnx + x];
 }
 
-void update_ball(struct BALL *ball, int scrnx, int scrny, int v, unsigned char *map)
+int update_ball(struct BALL *ball, int scrnx, int scrny, int v, struct SHTCTL *shtctl)
 {
+    int ret = 0;
+
     ball->x += ball->dirx * 3;
     ball->y += ball->diry * 3;
 
@@ -72,34 +74,59 @@ void update_ball(struct BALL *ball, int scrnx, int scrny, int v, unsigned char *
     {
         ball->y = scrny - ball->h;
         ball->diry = -ball->diry;
-        // taskctl = 0;
+        for (;;)
+        {
+            taskctl = 0;
+        }
     }
 
     int center_point_x = ball->x + ball->w / 2;
     int center_point_y = ball->y + ball->h / 2;
 
-    int up_point = get_map_val(map, scrnx, center_point_x, ball->y);
-    int down_point = get_map_val(map, scrnx, center_point_x, ball->y + ball->h);
-    int left_point = get_map_val(map, scrnx, ball->x, center_point_y);
-    int right_point = get_map_val(map, scrnx, ball->x + ball->w, center_point_y);
+    int up_point = get_map_val(shtctl->map, scrnx, center_point_x, ball->y);
+    int down_point = get_map_val(shtctl->map, scrnx, center_point_x, ball->y + ball->h);
+    int left_point = get_map_val(shtctl->map, scrnx, ball->x, center_point_y);
+    int right_point = get_map_val(shtctl->map, scrnx, ball->x + ball->w, center_point_y);
 
     if (up_point != ball->sht - ball->sht->ctl->sheets0 && up_point != 0 && !(down_point != ball->sht - ball->sht->ctl->sheets0 && down_point != 0))
     {
+        if ((shtctl->sheets0[up_point].flags & 0x80) != 0)
+        {
+            sheet_updown(&shtctl->sheets0[up_point], -1);
+            ret = 1;
+        }
         ball->diry = 1;
     }
     if (down_point != ball->sht - ball->sht->ctl->sheets0 && down_point != 0 && !(up_point != ball->sht - ball->sht->ctl->sheets0 && up_point != 0))
     {
+        if ((shtctl->sheets0[down_point].flags & 0x80) != 0)
+        {
+            sheet_updown(&shtctl->sheets0[down_point], -1);
+            ret = 1;
+        }
         ball->diry = -1;
     }
     if (left_point != ball->sht - ball->sht->ctl->sheets0 && left_point != 0 && !(right_point != ball->sht - ball->sht->ctl->sheets0 && right_point != 0))
     {
+        if ((shtctl->sheets0[left_point].flags & 0x80) != 0)
+        {
+            sheet_updown(&shtctl->sheets0[left_point], -1);
+            ret = 1;
+        }
         ball->dirx = 1;
     }
     if (right_point != ball->sht - ball->sht->ctl->sheets0 && right_point != 0 && !(left_point != ball->sht - ball->sht->ctl->sheets0 && left_point != 0))
     {
+        if ((shtctl->sheets0[right_point].flags & 0x80) != 0)
+        {
+            sheet_updown(&shtctl->sheets0[right_point], -1);
+            ret = 1;
+        }
         ball->dirx = -1;
     }
 
     sheet_slide(ball->sht, ball->x, ball->y);
     timer_settime(ball->timer, 3);
+
+    return ret;
 }
