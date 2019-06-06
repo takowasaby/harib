@@ -83,19 +83,19 @@ void update_ball(struct BALL *ball, int scrnx, int scrny, int v, unsigned char *
     int left_point = get_map_val(map, scrnx, ball->x, center_point_y);
     int right_point = get_map_val(map, scrnx, ball->x + ball->w, center_point_y);
 
-    if (up_point != ball->sht->height+1 && up_point != 0 && !(down_point != ball->sht->height+1 && down_point != 0))
+    if (up_point != ball->sht - ball->sht->ctl->sheets0 && up_point != 0 && !(down_point != ball->sht - ball->sht->ctl->sheets0 && down_point != 0))
     {
         ball->diry = 1;
     }
-    if (down_point != ball->sht->height+1 && down_point != 0 && !(up_point != ball->sht->height+1 && up_point != 0))
+    if (down_point != ball->sht - ball->sht->ctl->sheets0 && down_point != 0 && !(up_point != ball->sht - ball->sht->ctl->sheets0 && up_point != 0))
     {
         ball->diry = -1;
     }
-    if (left_point != ball->sht->height+1 && left_point != 0 && !(right_point != ball->sht->height+1 && right_point != 0))
+    if (left_point != ball->sht - ball->sht->ctl->sheets0 && left_point != 0 && !(right_point != ball->sht - ball->sht->ctl->sheets0 && right_point != 0))
     {
         ball->dirx = 1;
     }
-    if (right_point != ball->sht->height+1 && right_point != 0 && !(left_point != ball->sht->height+1 && left_point != 0))
+    if (right_point != ball->sht - ball->sht->ctl->sheets0 && right_point != 0 && !(left_point != ball->sht - ball->sht->ctl->sheets0 && left_point != 0))
     {
         ball->dirx = -1;
     }

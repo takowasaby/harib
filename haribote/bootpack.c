@@ -175,13 +175,13 @@ void HariMain(void)
 			io_sti();
 			if (key_win != 0 && key_win->flags == 0)
 			{
-				if (shtctl->top == 2)
+				if (shtctl->top == 1)
 				{
 					key_win = 0;
 				}
 				else
 				{
-					key_win = shtctl->sheets[shtctl->top - 2];
+					key_win = shtctl->sheets[shtctl->top - 1];
 					keywin_on(key_win);
 				}
 			}
@@ -223,7 +223,7 @@ void HariMain(void)
 					j = key_win->height - 1;
 					if (j == 0)
 					{
-						j = shtctl->top - 2;
+						j = shtctl->top - 1;
 					}
 					key_win = shtctl->sheets[j];
 					keywin_on(key_win);
@@ -283,12 +283,12 @@ void HariMain(void)
 					}
 					key_win = open_console(shtctl, memtotal);
 					sheet_slide(key_win, 32, 4);
-					sheet_updown(key_win, shtctl->top - 1);
+					sheet_updown(key_win, shtctl->top);
 					keywin_on(key_win);
 				}
-				if (i == 256 + 0x57 && shtctl->top > 3)
+				if (i == 256 + 0x57 && shtctl->top > 2)
 				{
-					// sheet_updown(shtctl->sheets[1], shtctl->top - 2);
+					// sheet_updown(shtctl->sheets[1], shtctl->top - 1);
 					int x, y;
 					for (x = 0; x < binfo->scrnx; x++)
 					{
@@ -336,7 +336,7 @@ void HariMain(void)
 					{
 						if (mmx < 0)
 						{
-							for (j = shtctl->top - 2; j > 0; j--)
+							for (j = shtctl->top - 1; j > 0; j--)
 							{
 								sht = shtctl->sheets[j];
 								x = mx - sht->vx0;
@@ -345,7 +345,7 @@ void HariMain(void)
 								{
 									if (sht->buf[y * sht->bxsize + x] != sht->col_inv)
 									{
-										sheet_updown(sht, shtctl->top - 2);
+										sheet_updown(sht, shtctl->top - 1);
 										if (sht != key_win)
 										{
 											keywin_off(key_win);
@@ -369,7 +369,7 @@ void HariMain(void)
 												task = sht->task;
 												sheet_updown(sht, -1);
 												keywin_off(key_win);
-												key_win = shtctl->sheets[shtctl->top - 2];
+												key_win = shtctl->sheets[shtctl->top - 1];
 												keywin_on(key_win);
 												io_cli();
 												fifo32_put(&task->fifo, 4);
