@@ -19,8 +19,8 @@ void HariMain(void)
 	unsigned int memtotal;
 	struct MOUSE_DEC mdec;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
-	unsigned char *buf_back, buf_mouse[256];
-	struct SHEET *sht_back, *sht_mouse;
+	unsigned char *buf_back, buf_mouse[256], buf_ball[256];
+	struct SHEET *sht_back, *sht_mouse, *sht_ball;
 	struct TASK *task_a, *task;
 	static char keytable0[0x80] = {
 		0,   0,   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '^', 0x08, 0,
@@ -49,6 +49,7 @@ void HariMain(void)
 	unsigned char *nihongo;
 	struct FILEINFO *finfo;
 	extern char hankaku[4096];
+	struct BALL ball;
 
 	init_gdtidt();
 	init_pic();
@@ -88,12 +89,28 @@ void HariMain(void)
 	mx = (binfo->scrnx - 16) / 2;
 	my = (binfo->scrny - 28 - 16) / 2;
 
+	sht_ball = sheet_alloc(shtctl);
+	sheet_setbuf(sht_ball, buf_ball, 16, 16, 99);
+	init_ball8(buf_ball, 99);
+	ball.timer = timer_alloc();
+	timer_init(ball.timer, &fifo, 11);
+	timer_settime(ball.timer, 3);
+	ball.sht = sht_ball;
+	ball.x = (binfo->scrnx - 16) / 2;
+	ball.y = (binfo->scrny - 28 - 16) / 2;
+	ball.w = 16;
+	ball.h = 16;
+	ball.dirx = -1;
+	ball.diry = -1;
+
 	sheet_slide(sht_back, 0, 0);
 	sheet_slide(key_win, 32, 4);
+	sheet_slide(sht_ball, ball.x, ball.y);
 	sheet_slide(sht_mouse, 8, 56);
 	sheet_updown(sht_back, 0);
 	sheet_updown(key_win, 1);
-	sheet_updown(sht_mouse, 2);
+	sheet_updown(sht_ball, 2);
+	sheet_updown(sht_mouse, 3);
 	keywin_on(key_win);
 
 	fifo32_put(&keycmd, KEYCMD_LED);
@@ -158,15 +175,19 @@ void HariMain(void)
 			io_sti();
 			if (key_win != 0 && key_win->flags == 0)
 			{
-				if (shtctl->top == 1)
+				if (shtctl->top == 2)
 				{
 					key_win = 0;
 				}
 				else
 				{
-					key_win = shtctl->sheets[shtctl->top - 1];
+					key_win = shtctl->sheets[shtctl->top - 2];
 					keywin_on(key_win);
 				}
+			}
+			if (i == 11)
+			{
+				update_ball(&ball, binfo->scrnx, binfo->scrny, 5, shtctl->map);
 			}
 			if (256 <= i && i <= 511)
 			{
@@ -202,7 +223,7 @@ void HariMain(void)
 					j = key_win->height - 1;
 					if (j == 0)
 					{
-						j = shtctl->top - 1;
+						j = shtctl->top - 2;
 					}
 					key_win = shtctl->sheets[j];
 					keywin_on(key_win);
@@ -262,12 +283,20 @@ void HariMain(void)
 					}
 					key_win = open_console(shtctl, memtotal);
 					sheet_slide(key_win, 32, 4);
-					sheet_updown(key_win, shtctl->top);
+					sheet_updown(key_win, shtctl->top - 1);
 					keywin_on(key_win);
 				}
-				if (i == 256 + 0x57 && shtctl->top > 2)
+				if (i == 256 + 0x57 && shtctl->top > 3)
 				{
-					sheet_updown(shtctl->sheets[1], shtctl->top - 1);
+					// sheet_updown(shtctl->sheets[1], shtctl->top - 2);
+					int x, y;
+					for (x = 0; x < binfo->scrnx; x++)
+					{
+						for (y = 0; y < binfo->scrny; y++)
+						{
+							shtctl->vram[x + y * binfo->scrnx] = shtctl->map[x + y * binfo->scrnx];
+						}
+					}
 				}
 				if (i == 256 + 0xfa)
 				{
@@ -307,7 +336,7 @@ void HariMain(void)
 					{
 						if (mmx < 0)
 						{
-							for (j = shtctl->top - 1; j > 0; j--)
+							for (j = shtctl->top - 2; j > 0; j--)
 							{
 								sht = shtctl->sheets[j];
 								x = mx - sht->vx0;
@@ -316,7 +345,7 @@ void HariMain(void)
 								{
 									if (sht->buf[y * sht->bxsize + x] != sht->col_inv)
 									{
-										sheet_updown(sht, shtctl->top - 1);
+										sheet_updown(sht, shtctl->top - 2);
 										if (sht != key_win)
 										{
 											keywin_off(key_win);
@@ -340,7 +369,7 @@ void HariMain(void)
 												task = sht->task;
 												sheet_updown(sht, -1);
 												keywin_off(key_win);
-												key_win = shtctl->sheets[shtctl->top - 1];
+												key_win = shtctl->sheets[shtctl->top - 2];
 												keywin_on(key_win);
 												io_cli();
 												fifo32_put(&task->fifo, 4);

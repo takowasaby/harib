@@ -1,6 +1,6 @@
 OBJS_BOOTPACK = bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj \
 		int.obj fifo.obj keyboard.obj mouse.obj memory.obj sheet.obj timer.obj \
-		mtask.obj window.obj console.obj file.obj tek.obj
+		mtask.obj window.obj console.obj file.obj tek.obj ball.obj
 
 TOOLPATH = ../../z_tools/
 INCPATH  = ../../z_tools/haribote/
@@ -20,16 +20,12 @@ GOLIB    = $(TOOLPATH)golib00.exe
 COPY     = copy
 DEL      = del
 
-# �f�t�H���g����
-
 default :
-	$(MAKE) ipl20.bin
+	$(MAKE) ipl22.bin
 	$(MAKE) haribote.sys
 
-# �t�@�C�������K��
-
-ipl20.bin : ipl20.nas Makefile
-	$(NASK) ipl20.nas ipl20.bin ipl20.lst
+ipl22.bin : ipl22.nas Makefile
+	$(NASK) ipl22.nas ipl22.bin ipl22.lst
 
 asmhead.bin : asmhead.nas Makefile
 	$(NASK) asmhead.nas asmhead.bin asmhead.lst
@@ -51,8 +47,6 @@ bootpack.hrb : bootpack.bim Makefile
 haribote.sys : asmhead.bin bootpack.hrb Makefile
 	copy /B asmhead.bin+bootpack.hrb haribote.sys
 
-# ��ʋK��
-
 %.gas : %.c bootpack.h Makefile
 	$(CC1) -o $*.gas $*.c
 
@@ -61,9 +55,6 @@ haribote.sys : asmhead.bin bootpack.hrb Makefile
 
 %.obj : %.nas Makefile
 	$(NASK) $*.nas $*.obj $*.lst
-
-# �R�}���h
-
 clean :
 	-$(DEL) asmhead.bin
 	-$(DEL) hankaku.bin
@@ -75,5 +66,5 @@ clean :
 
 src_only :
 	$(MAKE) clean
-	-$(DEL) ipl20.bin
+	-$(DEL) ipl22.bin
 	-$(DEL) haribote.sys

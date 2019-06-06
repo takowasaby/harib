@@ -330,3 +330,16 @@ int tek_decomp(unsigned char *p, char *q, int size);
 /* bootpack.c */
 struct TASK *open_constask(struct SHEET *sht, unsigned int memtotal);
 struct SHEET *open_console(struct SHTCTL *shtctl, unsigned int memtotal);
+
+/* ball.c */
+struct BALL
+{
+	struct TIMER *timer;
+	struct SHEET *sht;
+	int x, y;
+	int w, h;
+	char dirx, diry;
+};
+
+void init_ball8(char *ball, char bc);
+void update_ball(struct BALL *ball, int scrnx, int scrny, int v, unsigned char *map);
