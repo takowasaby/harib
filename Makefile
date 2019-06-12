@@ -68,6 +68,7 @@ haribote.img : haribote/ipl22.bin haribote/haribote.sys Makefile \
 		copy from:zelda.bmp to:@: \
 		copy from:euc.txt to:@: \
 		copy from:savannah.txt to:@: \
+		copy from:yosiyosi.txt to:@: \
 		copy from:nihongo/nihongo.fnt to:@: \
 		imgout:haribote.img
 

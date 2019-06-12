@@ -221,6 +221,15 @@ void HariMain(void)
 							fifo32_put(new_fifo, cmdline[n] + 256);
 						}
 						fifo32_put(new_fifo, 10 + 256);
+						
+						new_task = open_constask(0, memtotal);
+						new_fifo = &new_task->fifo;
+						cmdline = "tview yosiyosi.txt -w65 -h4";
+						for (n = 0; cmdline[n] != 0; n++)
+						{
+							fifo32_put(new_fifo, cmdline[n] + 256);
+						}
+						fifo32_put(new_fifo, 10 + 256);
 					}
 				}
 			}
